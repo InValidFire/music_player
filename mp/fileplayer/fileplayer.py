@@ -53,8 +53,8 @@ class FilePlayer(Player):
         else:
             self.playing = True
 
-    def queue_song(self, path: Path):
-        song = FileSong(path)
+    def queue_song(self, uri: Path):
+        song = FileSong(uri)
         self.queue.append(song)
 
     def queue_dir(self, path: Path):
