@@ -91,7 +91,7 @@ class FilePlayer(Player):
     def list_queue(self):
         print("-"*os.get_terminal_size().columns)
         print(f"Song Queue ({len(self.queue)} songs): ")
-        for i in range(self.pos, self.pos + 5):
+        for i in range(self.pos, min(self.pos + 5, len(self.queue))):
             print(self.queue[i])
         print("-"*os.get_terminal_size().columns)
 

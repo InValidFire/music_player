@@ -3,8 +3,7 @@ import json
 from types import SimpleNamespace
 import traceback
 
-from mp.fileplayer import FilePlayer
-from mp.spotifyplayer import SpotifyPlayer
+from mp import FilePlayer, SpotifyPlayer
 
 class Application:
     """Temporary application to test music player library functionality."""
