@@ -42,8 +42,13 @@ class Player(ABC):
         pass
 
     @abstractmethod
-    def queue_song(self, uri):
-        """Add a song to the queue."""
+    def queue_item(self, uri):
+        """Add an item to the queue. Could be an album, playlist, or song."""
+        pass
+
+    @abstractmethod
+    def play_item(self, uri):
+        """Play an item immediately without clearing the queue."""
         pass
 
     @abstractmethod

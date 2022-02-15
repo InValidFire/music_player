@@ -1,4 +1,6 @@
 from mp.lib import Player
+from .spotifyalbum import SpotifyAlbum
+from .spotifyplaylist import SpotifyPlaylist
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
@@ -36,13 +38,25 @@ class SpotifyPlayer(Player):
     def clear_queue(self):
         raise NotImplementedError("This endpoint is missing from Spotify's Web API")
 
-    def queue_song(self, uri: str):
-        if self.spotify.album_tracks(uri) is None:
+    def queue_item(self, uri: str):
+        if 'playlist' in uri:
+            playlist = SpotifyPlaylist(self.spotify.playlist_tracks(uri))
+            for song in playlist.songs:
+                self.spotify.add_to_queue(song.path)
+        elif 'album' in uri:
+            album = SpotifyAlbum(self.spotify.album_tracks(uri))
+            for song in album.songs:
+                self.spotify.add_to_queue(song.path)
+        elif 'song' in uri:
             self.spotify.add_to_queue(uri)
         else:
-            print(self.spotify.album_tracks(uri))
-            for song in self.spotify.album_tracks(uri):
-                self.spotify.add_to_queue(song)
+            raise ValueError("Unknown item given to queue.")
+
+    def play_item(self, uri: str):
+        if "track" in uri:
+            self.spotify.start_playback(uris=uri)
+        else:
+            self.spotify.start_playback(context_uri=uri)
 
     def stop(self):
         if self.playing:

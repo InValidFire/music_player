@@ -1,5 +1,6 @@
-import os
+import os, time
 from pathlib import Path
+import traceback
 from .filesong import FileSong
 from ..lib import Player
 from os import environ
@@ -53,17 +54,39 @@ class FilePlayer(Player):
         else:
             self.playing = True
 
-    def queue_song(self, uri: Path):
-        song = FileSong(uri)
-        self.queue.append(song)
+    def queue_item(self, uri: str):
+        uri = Path(uri)
+        if uri.is_file():
+            song = FileSong(uri)
+            self.queue.append(song)
+        elif uri.is_dir():
+            for file in uri.glob("**/*.mp3"):
+                song = FileSong(file.resolve())
+                self.queue.append(song)
+        else:
+            raise ValueError("Unrecognized path given.")
 
-    def queue_dir(self, path: Path):
-        if path.is_dir():
-            for file in path.glob("**/*.mp3"):
-                self.queue_song(file.resolve())
+    def play_item(self, uri: str):
+        uri = Path(uri)
+        if uri.is_dir():
+            for file in uri.glob("**/*.mp3"):
+                song = FileSong(file.resolve())
+                self.queue.insert(self.pos + 1, song)
+        elif uri.is_file():
+            song = FileSong(uri.resolve())
+            self.queue.insert(self.pos + 1, song)
+        else:
+            raise ValueError("Unrecognized path given.")
+        if not self.playing:
+            self.toggle_playback()
+        else:
+            self.next_song()
 
     def clear_queue(self):
-        raise NotImplementedError
+        if len(self.queue) > 1:
+            song = self.queue[self.pos]
+            self.queue.clear()
+            self.queue.append(song)
 
     def list_queue(self):
         print("-"*os.get_terminal_size().columns)
@@ -86,10 +109,15 @@ class FilePlayer(Player):
 
     def thread(self):
         while True:
-            if self.playing and not mixer.music.get_busy():
-                self.pos += 1  # automatically move to the next song after finished playing.
-                mixer.music.load(self.queue[self.pos].path)
-                mixer.music.play()
-            if self._closing:
-                break
-        
+            try:
+                time.sleep(1)  # keeps thread from over-working
+                if self.playing and not mixer.music.get_busy() and len(self.queue)-1 > self.pos:
+                    self.pos += 1  # automatically move to the next song after finished playing.
+                    mixer.music.load(self.queue[self.pos].path)
+                    mixer.music.play()
+                if self._closing:
+                    break
+            except:
+                print("Exception in player thread. Closing.")
+                traceback.print_exc()
+                self.stop()
